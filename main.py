@@ -1,14 +1,14 @@
 __author__ = "Anderesu44"
 
 from sys import argv,exit
-from os import mkdir,listdir,path
-from model._class_ import Anime
+from os import mkdir,listdir,path,system
+from model._class_ import Anime , Reseption
 class NoReturn():...
 #{
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ID_ERROR = "\nthe id given not is valid\n"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
-VERSION = "0.0.1"
+VERSION = "0.1.1"
 #}
 ANIMES_DIR = "D:\\"
 def main(argv,*args,**kwargs):
@@ -32,7 +32,7 @@ animes <command> [option]
         case "-o"|"--open":
             pass
         case "-s"|"--sort":
-            pass
+            _sort(argv[1:])
         case "-v"|"--view":
             _view(argv[1:])
         case "-h"|"--help":
@@ -56,7 +56,7 @@ all the arguments after the 3rd will be taken as a name
         exit()
     try:
         num = int(args[1])
-    except TypeError:
+    except ValueError:
         print(ID_ERROR)
         exit()
     if len(str(num)) != 4:
@@ -102,8 +102,39 @@ all the arguments after the 3rd will be taken as a name
     exit()
 def _open(*args,**kwargs):
     pass
-def _sort(*args,**kwargs):
-    pass
+def _sort(*args,**kwargs)->NoReturn:
+    while True:
+        try:
+            reseption = Reseption(path.join(ANIMES_DIR,"0000"))
+            break
+        except FileNotFoundError:
+            mkdir(path.join(ANIMES_DIR,"0000"))
+    animes = Anime(ANIMES_DIR)
+    caps = reseption.get_paths()
+    for cap in caps:
+        temp = cap.split("_")[0]
+        temp = temp.replace(ANIMES_DIR + "0000\\","")
+        a_num = int(temp)# anime_number
+
+        temp = cap.split("_")[1]
+        c_num = "" #capter_number
+        for c in temp:
+            try:
+                int(c)
+                c_num += c
+            except ValueError:
+                break
+        while True:
+            try:
+                new_path = f"{animes.get_path(num=a_num)}\\{a_num}_{c_num}.mp4"
+                break
+            except KeyError:
+                _new(["-n",a_num,"unnamed"])
+        system(f"mv '{cap}' '{new_path}'")
+        print(f"relocated file:\n\t{cap} to {new_path}\n")
+    print("All Sorted")
+    exit()
+
 def _view(*args,**kwargs)->NoReturn:
     a = Anime(ANIMES_DIR)
     print(a,end="",)
