@@ -8,14 +8,13 @@ class NoReturn():...
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ID_ERROR = "\nthe id given not is valid\n"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
-VERSION = "0.1.1"
+VERSION = "0.2.1"
 #}
 ANIMES_DIR = "D:\\"
 def main(argv,*args,**kwargs):
     HELP = """
 animes <command> [option]
     -n or --new     => make new animme folder
-    -o or --open    => open one anime folder and reproduces the last chapter
     -s or --sort    => sort the animes in reseption folder
 
     -v or --view    => show all animes folders
@@ -29,8 +28,6 @@ animes <command> [option]
     match argv[1]:
         case "-n"|"--new":
             _new(argv[1:])
-        case "-o"|"--open":
-            pass
         case "-s"|"--sort":
             _sort(argv[1:])
         case "-v"|"--view":
@@ -100,8 +97,6 @@ all the arguments after the 3rd will be taken as a name
         conten = str(conten).replace("'","")
         raise FileExistsError(f"Cannot create a folder that already exists\n{num}_{nam}:\n\tContains:{conten}")
     exit()
-def _open(*args,**kwargs):
-    pass
 def _sort(*args,**kwargs)->NoReturn:
     while True:
         try:
@@ -134,7 +129,6 @@ def _sort(*args,**kwargs)->NoReturn:
         print(f"relocated file:\n\t{cap} to {new_path}\n")
     print("All Sorted")
     exit()
-
 def _view(*args,**kwargs)->NoReturn:
     a = Anime(ANIMES_DIR)
     print(a,end="",)
