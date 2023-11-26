@@ -8,7 +8,7 @@ from typing import NoReturn
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ID_ERROR = "\nthe id given not is valid\n"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
-VERSION = "0.2.3"
+VERSION = "0.2.4"
 #}
 ANIMES_DIR = "D:\\"
 def main(argv,*args,**kwargs):
@@ -107,7 +107,7 @@ commands
 special commands
     --wait => the program waits before ending
 """
-    for arg in args:
+    for arg in args[1:]:
         if arg == "-h":
             print(HELP)
         elif "-" in arg and arg != "--wait":
