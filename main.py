@@ -3,12 +3,12 @@ __author__ = "Anderesu44"
 from sys import argv,exit
 from os import mkdir,listdir,path,system
 from model._class_ import Anime , Reseption
-class NoReturn():...
+from typing import NoReturn
 #{
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ID_ERROR = "\nthe id given not is valid\n"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
-VERSION = "0.2.1"
+VERSION = "0.2.3"
 #}
 ANIMES_DIR = "D:\\"
 def main(argv,*args,**kwargs):
@@ -21,6 +21,8 @@ animes <command> [option]
     -h or --help    => show help
     --version       => show vesion
 
+special commands
+    --wait          => the program waits before ending
 """
     if len(argv) == 1:
         print(HELP)
@@ -97,7 +99,20 @@ all the arguments after the 3rd will be taken as a name
         conten = str(conten).replace("'","")
         raise FileExistsError(f"Cannot create a folder that already exists\n{num}_{nam}:\n\tContains:{conten}")
     exit()
-def _sort(*args,**kwargs)->NoReturn:
+def _sort(args)->NoReturn:
+    HELP = f"""
+animes <{args[0]}> [command]
+commands
+    -h     => show help
+special commands
+    --wait => the program waits before ending
+"""
+    for arg in args:
+        if arg == "-h":
+            print(HELP)
+        elif "-" in arg and arg != "--wait":
+            print(COMMAND_UNKNOWN)
+            exit()
     while True:
         try:
             reseption = Reseption(path.join(ANIMES_DIR,"0000"))
@@ -125,13 +140,16 @@ def _sort(*args,**kwargs)->NoReturn:
                 break
             except KeyError:
                 _new(["-n",a_num,"unnamed"])
-        system(f"mv '{cap}' '{new_path}'")
+        system(f'move "{cap}" "{new_path}"')
         print(f"relocated file:\n\t{cap} to {new_path}\n")
     print("All Sorted")
     exit()
 def _view(*args,**kwargs)->NoReturn:
     a = Anime(ANIMES_DIR)
     print(a,end="",)
+    for arg in args:
+        if arg == "--wait":
+            input()
     exit()
 
 def _valid_name(name,*args,**kwargs)->bool:
