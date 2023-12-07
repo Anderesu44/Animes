@@ -1,17 +1,17 @@
 __author__ = "Anderesu44"
 
 from sys import argv,exit
+from typing import NoReturn
 from os import mkdir,listdir,path,system
 from model._class_ import Anime , Reseption
-from typing import NoReturn
 #{
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ID_ERROR = "\nthe id given not is valid\n"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
-VERSION = "0.2.4"
-#}
+VERSION = "0.2.5"
 ANIMES_DIR = "D:\\"
-def main(argv,*args,**kwargs):
+#}
+def main(argv):
     HELP = """
 animes <command> [option]
     -n or --new     => make new animme folder
@@ -41,7 +41,7 @@ special commands
         case _:
             print(COMMAND_UNKNOWN)
             exit()
-def _new(args:list,**kwargs)->NoReturn:
+def _new(args:list)->NoReturn:
     HELP = f"""
 animes {argv[0]} <id:int> <name:str>
 
@@ -143,8 +143,11 @@ special commands
         system(f'move "{cap}" "{new_path}"')
         print(f"relocated file:\n\t{cap} to {new_path}\n")
     print("All Sorted")
+    for arg in args:
+        if arg == "--wait":
+            input()
     exit()
-def _view(*args,**kwargs)->NoReturn:
+def _view(*args)->NoReturn:
     a = Anime(ANIMES_DIR)
     print(a,end="",)
     for arg in args:
@@ -152,7 +155,7 @@ def _view(*args,**kwargs)->NoReturn:
             input()
     exit()
 
-def _valid_name(name,*args,**kwargs)->bool:
+def _valid_name(name)->bool:
     x = name
     if "\\" in x or "/" in x or ":" in x or "*" in x or "?" in x or '"' in x or "<" in x or ">" in x or "|" in x:
         return False
