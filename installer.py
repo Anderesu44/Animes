@@ -1,5 +1,5 @@
 __author__ = "Anderesu44"
-__version__ = 0.5
+__version__ = 0.7
 
 PROJECT_NANE = "animes"
 INSTAL_PATH = "C:\\Program Files\\Anderesu44\\"
