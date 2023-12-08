@@ -64,7 +64,7 @@ def _set(files:list[tuple[str,str]]=[("_file","_path")]):
             f"{new_dir}\\{_file}.{new_exte}"
             ))
     for sub_dir in sub_dirs:
-        system(f'mkdir {sub_dir}')
+        system(f'mkdir "{sub_dir}"')
     for path_ in paths:
         system(f'remove "{path_[1]}"')
         system(f'copy "{path_[0]}" "{path_[1]}"')
