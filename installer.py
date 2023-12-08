@@ -14,16 +14,16 @@ def main():
     while True:    
         try:
             listdir(INSTAL_PATH)
-            while True:
-                try:
-                    listdir(INSTAL_PATH + PROJECT_NANE)
-                    break
-                except FileExistsError:
-                    mkdir(INSTAL_PATH+PROJECT_NANE)
-                    is_new = True
             break
         except FileNotFoundError:
             mkdir(INSTAL_PATH)
+    while True:
+        try:
+            listdir(INSTAL_PATH + PROJECT_NANE)
+            break
+        except FileNotFoundError:
+            mkdir(INSTAL_PATH+PROJECT_NANE)
+            is_new = True
     if is_new:
         _set(files)
         showinfo("Operacion completada","el programa se instalo corectamente")
