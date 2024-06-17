@@ -1,5 +1,5 @@
 __author__ = "Anderesu44"
-__version__ = 0.7
+__version__ = 0.8
 
 PROJECT_NANE = "animes"
 INSTAL_PATH = "C:\\Program Files\\Anderesu44\\"
@@ -38,7 +38,7 @@ def main():
 def _set(files:list[tuple[str,str]]=[("_file","_path")]):
     pwd = getcwd()
     inst = INSTAL_PATH + PROJECT_NANE
-    sub_dirs = []
+    sub_dirs = set()
     paths = [(f"{pwd}\\main.exe",f"{inst}\\{PROJECT_NANE}.exe")]
     for file_ in files:
         if file_[0] == "pwd":
@@ -47,7 +47,7 @@ def _set(files:list[tuple[str,str]]=[("_file","_path")]):
         else:
             dir_ = f"{pwd}\\{file_[0]}"
             new_dir = f"{inst}\\{file_[0]}"
-            sub_dirs.append(new_dir)
+            sub_dirs.add(new_dir)
         if file_[1].count(".") != 1 :
             _file = file_[1]
             exte = ""
