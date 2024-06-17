@@ -288,4 +288,4 @@ def _back_dir()->str:
     return _dir
 if __name__ == '__main__':
     # main(argv)
-    main(["anime",])
+    main(["anime","--config"])
