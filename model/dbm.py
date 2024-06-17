@@ -1,7 +1,8 @@
 __author__ = "Anderesu44"
-__version__ = 0.1
+__version__ = 0.5
 
-from os import mkdir
+from os import system
+from builtins import dict
 
 def main(*args,**kwargs):
     pass
@@ -40,7 +41,7 @@ class DataBaseManger():
                 file = open(f"{self.db_path}\\a44.cfg","w")
                 break
             except FileNotFoundError:
-                mkdir(self.db_path)
+                system(f"mkdir {self.db_path}")
                 continue
         file.write(f"""{self.db_id}
 file_type: a44_config;
@@ -132,59 +133,101 @@ __version__: {__version__};
         return new_text
 
 
-class ConfigManager():
-    def __init__(self,db_path:str):
-        # self.db_path = db_path
-        self.db = DataBaseManger(db_path)
-        self.__def_value()
-        
-    def __def_value(self):
-        self.file_path = self.db.get_data()["file_path"]
-        self.lang = self.db.get_data()["lang"]
-    def get_config(self,*args,**kwargs)->str:
-        configs = [self.file_path, self.lang]
-        cfgs = {}
-        direct = 0
-        if len(kwargs) ==0:
-            if len(args) > 0:
-                for i in args:
-                    cfgs[i] = "X"
-            else: 
-                return configs
-        else:
-            cfgs = kwargs
-        for k in cfgs:        
-            match k:
-                case "file_path":
-                    if cfgs[k] == "!" or (not(cfgs[k])):
-                        configs.remove(self.file_path)
-                        direct = 1
-                    if direct == 0:
-                        return self.file_path
-                case "lang":
-                    if cfgs[k] == "!" or (not(cfgs[k])):
-                        configs.remove(self.lang)
-                        direct = 1
-                    if direct == 0:
-                        return self.lang
-        if direct:
-            return configs
-    def set_config(self,*args,**kwargs):
-        for k in kwargs:
-            match k:
-                case "file_path":
-                    self.file_path=kwargs[k]
-                case "lang":
-                    self.lang=kwargs[k]
-        self.save_config()
-
-    def save_config(self,*args,**kwargs):
-        cfg = {"file_path": self.file_path, "lang" : self.lang,}
-        self.db.set_data(cfg)
     
     def delte_config(self,*args,**kwargs)->str:
         self.db.set_data({})
 
+class ConfigManager(dict):
+    def __init__(self,db_path):
+        super().__init__()
+        self.db = DataBaseManger(db_path)
 
+    def save_config(self,*args,**kwargs):
+        self.db.set_data(self)
+    def load_config(self):
+        data = self.db.get_data()
+        for key in data:
+            value = data[key]
+            self.__setitem__(key,value)
+    # def __setitem__(self,key,value):
+    #     super().__setitem__(key,value)
+    
 if __name__ == '__main__':
     main()
+
+
+# class ConfigManager():
+#     def __init__(self,db_path:str):
+#         # self.db_path = db_path
+#         self.db = DataBaseManger(db_path)
+#         self.__def_value()
+        
+#     def __def_value(self):
+#         self.file_path = self.db.get_data()["ANIMES_DIR"]
+#         self.res_path = self.db.get_data()["RESEPTION_DIR"]
+#         self.lang = self.db.get_data()["lang"]
+    # def get_config(self,*args,**kwargs)->str:
+    #     configs = [self.file_path_old,self.res_path_old,self.file_path,self.res_path, self.lang]
+    #     cfgs = {}
+    #     direct = 0
+    #     if len(kwargs) ==0:
+    #         if len(args) > 0:
+    #             for i in args:
+    #                 cfgs[i] = "X"
+    #         else: 
+    #             return configs
+    #     else:
+    #         cfgs = kwargs
+    #     for k in cfgs:        
+    #         match k:
+    #             case "ANIMES_DIR":
+    #                 if cfgs[k] == "!" or (not(cfgs[k])):
+    #                     configs.remove(self.file_path)
+    #                     direct = 1
+    #                 if direct == 0:
+    #                     return self.file_path
+    #             case "RESEPTION_DIR":
+    #                 if cfgs[k] == "!" or (not(cfgs[k])):
+    #                     configs.remove(self.res_path)
+    #                     direct = 1
+    #                 if direct == 0:
+    #                     return self.res_path
+    #             case "OLD_ANIMES_DIR":
+    #                 if cfgs[k] == "!" or (not(cfgs[k])):
+    #                     configs.remove(self.file_path_old)
+    #                     direct = 1
+    #                 if direct == 0:
+    #                     return self.file_path_old
+    #             case "OLD_RESEPTION_DIR":
+    #                 if cfgs[k] == "!" or (not(cfgs[k])):
+    #                     configs.remove(self.res_path_old)
+    #                     direct = 1
+    #                 if direct == 0:
+    #                     return self.res_path_old
+    #             case "lang":
+    #                 if cfgs[k] == "!" or (not(cfgs[k])):
+    #                     configs.remove(self.lang)
+    #                     direct = 1
+    #                 if direct == 0:
+    #                     return self.lang
+    #     if direct:
+    #         return configs
+    # def set_config(self,*args,**kwargs):
+    #     for k in kwargs:
+    #         match k:
+    #             case "ANIMES_DIR":
+    #                 self.file_path=kwargs[k]
+    #             case "RESEPTION_DIR":
+    #                 self.res_path=kwargs[k]
+    #             case "OLD_ANIMES_DIR":
+    #                 self.res_path=kwargs[k]
+    #             case "OLD_RESEPTION_DIR":
+    #                 self.res_path=kwargs[k]
+    #             case "lang":
+    #                 self.lang=kwargs[k]
+    #     self.save_config()
+
+    #? def save_config(self,*args,**kwargs):
+    #?     cfg = {"ANIMES_DIR": self.file_path,"RESEPTION_DIR": self.res_path, "lang" : self.lang,
+    #?           "OLD_ANIMES_DIR": self.file_path_old,"OLD_RESEPTION_DIR": self.res_path_old,}
+    #?    self.db.set_data(cfg)
