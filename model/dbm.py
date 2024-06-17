@@ -24,7 +24,6 @@ class DataBaseManger():
             if not(conten[0].replace("\n","") == self.db_id):
                 file.close()
                 return False
-            # file.readline(0)
             if not conten[2].replace("\n","") == f"__version__: {__version__};":
                 file.close()
                 return False
@@ -141,6 +140,7 @@ class ConfigManager(dict):
     def __init__(self,db_path):
         super().__init__()
         self.db = DataBaseManger(db_path)
+        self.load_config()
 
     def save_config(self,*args,**kwargs):
         self.db.set_data(self)

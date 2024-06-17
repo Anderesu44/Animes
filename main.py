@@ -1,21 +1,29 @@
 __author__ = "Anderesu44"
+__version__ = 0.8
 
 from sys import argv,exit
 from typing import NoReturn
-from os import mkdir,listdir,path,system
+from os import mkdir,listdir,path,system,getcwd
+from model.dbm import ConfigManager
 from model._class_ import Anime , Reseption
 #{
-COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ID_ERROR = "\nthe id given not is valid\n"
+DIR_ERROR = "path specified not found"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
-VERSION = "0.2.5"
-ANIMES_DIR = "D:\\"
+COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
+VERSION = "0.8.3"
+CONFIG_DIR = "C:\\ProgramData\\Anderesu44\\animes"
+CFG = ConfigManager(CONFIG_DIR)
+
+ANIMES_DIR = CFG["ANIMES_DIR"]
+RESEPTION_DIR = CFG["RESEPTION_DIR"]
 #}
 def main(argv):
     HELP = """
 animes <command> [option]
     -n or --new     => make new animme folder
     -s or --sort    => sort the animes in reseption folder
+    --config        => changes the program configuration
 
     -v or --view    => show all animes folders
     -h or --help    => show help
@@ -32,22 +40,26 @@ special commands
             _new(argv[1:])
         case "-s"|"--sort":
             _sort(argv[1:])
+        case "--config":
+            _config(argv[1:])
         case "-v"|"--view":
             _view(argv[1:])
         case "-h"|"--help":
             print(HELP)
-        case "--version":
-            print(f"animes version:{VERSION}")
-        case _:
-            print(COMMAND_UNKNOWN)
+            if "--wait" in argv:
+                input()
             exit()
+        case "--version":
+            print(f"animes manager version:{VERSION}")
+        case _:
+            exit(COMMAND_UNKNOWN)
 def _new(args:list)->NoReturn:
     HELP = f"""
-animes {argv[0]} <id:int> <name:str>
+animes {args[0]} <id:int> <name:str>
 
 all the arguments after the 3rd will be taken as a name
 """
-    if args == 1:
+    if len(args) == 1:
         print(HELP)
         exit()
     if args[1] == "-h":
@@ -57,9 +69,13 @@ all the arguments after the 3rd will be taken as a name
         num = int(args[1])
     except ValueError:
         print(ID_ERROR)
+        if "--wait" in argv:
+                input()
         exit()
     if len(str(num)) != 4:
         print(ID_ERROR)
+        if "--wait" in argv:
+                input()
         exit()
     nam = ""
     c = 1
@@ -71,9 +87,11 @@ all the arguments after the 3rd will be taken as a name
             nam += " " + a 
     if not _valid_name(nam):
         print(NAME_ERROR)
+        if "--wait" in argv:
+                input()
         exit()
     
-    _path = path.join(ANIMES_DIR,f"{num}_{nam}")
+    _path =f"{ANIMES_DIR}\\{num}_{nam}"
     try:
         mkdir(_path)
     except FileExistsError:
@@ -110,20 +128,40 @@ special commands
     for arg in args[1:]:
         if arg == "-h":
             print(HELP)
+            exit()
+        elif arg == ".":
+            try:
+                listdir(getcwd())
+                _DIR = getcwd()
+            except FileNotFoundError:
+                print(DIR_ERROR)
+        elif arg == "..":
+            try:
+                listdir(_back_dir())
+                _DIR = _back_dir()
+            except FileNotFoundError:
+                print(DIR_ERROR)
         elif "-" in arg and arg != "--wait":
             print(COMMAND_UNKNOWN)
             exit()
+    if len(args) == 1:
+        _DIR = RESEPTION_DIR
+        
+
     while True:
         try:
-            reseption = Reseption(path.join(ANIMES_DIR,"0000"))
+            reseption = Reseption(path.join(_DIR))
             break
         except FileNotFoundError:
-            mkdir(path.join(ANIMES_DIR,"0000"))
+            mkdir(path.join(_DIR))
+    
     animes = Anime(ANIMES_DIR)
     caps = reseption.get_paths()
+    iter = -1
     for cap in caps:
+        iter += 1
         temp = cap.split("_")[0]
-        temp = temp.replace(ANIMES_DIR + "0000\\","")
+        temp = temp.replace(_DIR + "\\","")
         a_num = int(temp)# anime_number
 
         temp = cap.split("_")[1]
@@ -133,7 +171,7 @@ special commands
                 int(c)
                 c_num += c
             except ValueError:
-                break
+                pass
         while True:
             try:
                 new_path = f"{animes.get_path(num=a_num)}\\{a_num}_{c_num}.mp4"
@@ -141,13 +179,15 @@ special commands
             except KeyError:
                 _new(["-n",a_num,"unnamed"])
         system(f'move "{cap}" "{new_path}"')
-        print(f"relocated file:\n\t{cap} to {new_path}\n")
+        if iter == 0:
+            print(f"relocated files:")
+        print(f"\t{cap} to {new_path}\n")
     print("All Sorted")
     for arg in args:
         if arg == "--wait":
             input()
     exit()
-def _view(*args)->NoReturn:
+def _view(args)->NoReturn:
     a = Anime(ANIMES_DIR)
     print(a,end="",)
     for arg in args:
@@ -155,11 +195,97 @@ def _view(*args)->NoReturn:
             input()
     exit()
 
+def _config(args)->NoReturn:
+    HELP = f"""
+animes {args[0]} <commands> [options]
+
+commands
+    --a_dir      => changes the animes directory \t\t({ANIMES_DIR})
+    --r_dir      => changes the default resection directory \t({RESEPTION_DIR})
+    --dir        => changes the animes directory and the default resection directory
+
+    --cfg or -o  => open confing.cfg
+    -h           => show help
+""" 
+    if len(args) == 1:
+        exit(HELP)
+    HELP_1 = f"""
+animes {args[0]} {args[1]} <path>
+animes {args[0]} {args[1]} <option>
+
+options
+    --back or -b => back to the previous configuration
+    --default or -b => set the default configuration
+commands
+    -h           => show help
+""" 
+    match args[1]:
+        case "-h":
+            exit(HELP)
+        case "--cfg"|"-o":
+            system(f"{CONFIG_DIR}\\a44.cfg")
+
+        case "--a_dir":
+            if len(args) == 2:
+                exit(HELP_1)
+            match args[2]:
+                case "-h":
+                    exit(HELP_1)
+            try:
+                mkdir(args[2])
+            except FileNotFoundError:
+                exit(DIR_ERROR)
+            CFG["ANIMES_DIR_OLD"] = ANIMES_DIR
+            CFG["ANIMES_DIR_NEW"] = args[2]
+            CFG.save_config()
+
+        case "--r_dir":
+            if len(args) == 2:
+                exit(HELP_1)
+            match args[2]:
+                case "-h":
+                    exit(HELP_1)
+            try:
+                mkdir(args[2])
+            except FileNotFoundError:
+                exit(DIR_ERROR)
+            CFG["RESEPTION_DIR_OLD"] = RESEPTION_DIR
+            CFG["RESEPTION_DIR_NEW"] = args[2]
+            CFG.save_config()
+
+        case "-dir":
+            if len(args) == 2:
+                exit(HELP_1)
+            match args[2]:
+                case "-h":
+                    exit(HELP_1)
+            try:
+                mkdir(args[2])
+            except FileNotFoundError:
+                exit(DIR_ERROR)
+            CFG["ANIMES_DIR_OLD"] = ANIMES_DIR
+            CFG["ANIMES_DIR_NEW"] = args[2]
+            CFG["RESEPTION_DIR_OLD"] = RESEPTION_DIR
+            CFG["RESEPTION_DIR_NEW"] = args[2] + "\\0000"
+            CFG.save_config()
+        
+        case _:
+            exit(COMMAND_UNKNOWN)
+
 def _valid_name(name)->bool:
     x = name
     if "\\" in x or "/" in x or ":" in x or "*" in x or "?" in x or '"' in x or "<" in x or ">" in x or "|" in x:
         return False
     else:
         return True
+def _back_dir()->str:
+    _dir = getcwd()
+    temp = _dir.split("\\")
+    temp.pop()
+    _dir = ""
+    for folder in temp:
+        _dir += folder + "\\"
+    return _dir
 if __name__ == '__main__':
-    main(argv)
+    # main(argv)
+    main(["anime",])
