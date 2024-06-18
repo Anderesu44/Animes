@@ -1,5 +1,5 @@
 __author__ = "Anderesu44"
-__version__ = 0.8
+__version__ = 0.9
 
 from sys import argv,exit
 from typing import NoReturn
@@ -11,7 +11,8 @@ ID_ERROR = "\nthe id given not is valid\n"
 DIR_ERROR = "path specified not found"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
-VERSION = "0.8.3"
+ACCESS_DENIED = "Access denied"
+VERSION = "0.9.1"
 CONFIG_DIR = "C:\\ProgramData\\Anderesu44\\animes"
 CFG = ConfigManager(CONFIG_DIR)
 
@@ -214,10 +215,10 @@ animes {args[0]} {args[1]} <path>
 animes {args[0]} {args[1]} <option>
 
 options
-    --back or -b => back to the previous configuration
-    --default or -b => set the default configuration
+    --back or -b    => back to the previous configuration
+    --default or -d => set the default configuration
 commands
-    -h           => show help
+    -h              => show help
 """ 
     match args[1]:
         case "-h":
@@ -225,50 +226,68 @@ commands
         case "--cfg"|"-o":
             system(f"{CONFIG_DIR}\\a44.cfg")
 
+        case "--a_dir"| "--r_dir" |"--dir":
+            if len(args) == 2:
+                exit(HELP_1)
+            match args[2]:
+                case "-h":
+                    exit(HELP_1)
+                case "--back" | "-b":
+                    path_0 = CFG["ANIMES_DIR_OLD"]
+                    path_1 = CFG["RESEPTION_DIR_OLD"]
+                case "--default" | "-d":
+                    path_0 = CFG["DEFAULT_ANIMES_DIR"]
+                    path_1 = CFG["DEFAULT_RESEPTION_DIR"]
+                case _:
+                    if args[2][0] == "-":
+                        exit(COMMAND_UNKNOWN)
+                    path_0 = args[2]
+                    path_1 = args[2] + "\\0000"
+        case _:
+            exit(COMMAND_UNKNOWN)
+
+    match args[1]:
         case "--a_dir":
-            if len(args) == 2:
-                exit(HELP_1)
-            match args[2]:
-                case "-h":
-                    exit(HELP_1)
             try:
-                mkdir(args[2])
+                mkdir(path_0)
             except FileNotFoundError:
                 exit(DIR_ERROR)
+            except PermissionError:
+                exit(ACCESS_DENIED)
+            except FileExistsError:
+                pass
             CFG["ANIMES_DIR_OLD"] = ANIMES_DIR
-            CFG["ANIMES_DIR_NEW"] = args[2]
+            CFG["ANIMES_DIR"] = path_0
             CFG.save_config()
-
         case "--r_dir":
-            if len(args) == 2:
-                exit(HELP_1)
-            match args[2]:
-                case "-h":
-                    exit(HELP_1)
             try:
-                mkdir(args[2])
+                mkdir(path_1)
             except FileNotFoundError:
                 exit(DIR_ERROR)
+            except PermissionError:
+                exit(ACCESS_DENIED)
+            except FileExistsError:
+                pass
             CFG["RESEPTION_DIR_OLD"] = RESEPTION_DIR
-            CFG["RESEPTION_DIR_NEW"] = args[2]
+            CFG["RESEPTION_DIR"] = path_1
             CFG.save_config()
 
-        case "-dir":
-            if len(args) == 2:
-                exit(HELP_1)
-            match args[2]:
-                case "-h":
-                    exit(HELP_1)
+        case "--dir":
             try:
-                mkdir(args[2])
+                mkdir(path_0)
+                mkdir(path_1)
             except FileNotFoundError:
                 exit(DIR_ERROR)
-            CFG["ANIMES_DIR_OLD"] = ANIMES_DIR
-            CFG["ANIMES_DIR_NEW"] = args[2]
+            except PermissionError:
+                exit(ACCESS_DENIED)
+            except FileExistsError:
+                pass
+            CFG["ANIMES_DIR"] = ANIMES_DIR
+            CFG["ANIMES_DIR_OLD"] = path_0
             CFG["RESEPTION_DIR_OLD"] = RESEPTION_DIR
-            CFG["RESEPTION_DIR_NEW"] = args[2] + "\\0000"
+            CFG["RESEPTION_DIR"] = path_1
             CFG.save_config()
-        
+            
         case _:
             exit(COMMAND_UNKNOWN)
 
@@ -287,5 +306,5 @@ def _back_dir()->str:
         _dir += folder + "\\"
     return _dir
 if __name__ == '__main__':
-    # main(argv)
-    main(["anime","--config"])
+    main(argv)
+    # main(["anime","--config"])
