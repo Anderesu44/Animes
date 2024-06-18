@@ -1,5 +1,5 @@
 __author__ = "Anderesu44"
-__version__ = 0.5
+__version__ = 0.9
 
 from os import system
 from builtins import dict
@@ -59,9 +59,17 @@ __version__: {__version__};
         odata = {}
         selc = 0
         level = 0
+        safe = 0
         key= ""
         value = ""
         for c in data:
+            if safe:
+                if level:
+                        if selc:
+                            value += c
+                        else:
+                            key += c
+                        safe = 0
             match c:
                 case "{":
                     level = 1
@@ -72,11 +80,13 @@ __version__: {__version__};
                     selc = 1
                 case ";":
                     if level:
-                        odata[key] = value
+                        odata[key.strip()] = value.strip()
                         key =""
                         value = ""
                         selc = 0
-                case " "|"\n"|"\t":
+                case "?":
+                    safe = 1
+                case "\n"|"\t":
                     continue
                 case _:
                     if level:
@@ -84,7 +94,6 @@ __version__: {__version__};
                             value += c
                         else:
                             key += c
-        odata
         return(odata)    
     
     def set_data(self,cfg:dict):
@@ -99,7 +108,10 @@ __version__: {__version__};
             a = a.replace("(","")
             a = a.replace(")","")
             a = a.replace("'","")
+            a = a.replace(":","?:")
             a = a.replace(",",":")
+            a = a.replace("{{}","?{{")
+            a = a.replace("}}","?}}")
             a = a.replace("\\\\","\\")
             a = self.remove_spaces(a)
             a+=";\n"

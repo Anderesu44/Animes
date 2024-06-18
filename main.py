@@ -12,7 +12,7 @@ DIR_ERROR = "path specified not found"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ACCESS_DENIED = "Access denied"
-VERSION = "0.9.1"
+VERSION = "0.9.9"
 CONFIG_DIR = "C:\\ProgramData\\Anderesu44\\animes"
 CFG = ConfigManager(CONFIG_DIR)
 
@@ -256,8 +256,8 @@ commands
                 exit(ACCESS_DENIED)
             except FileExistsError:
                 pass
-            CFG["ANIMES_DIR_OLD"] = ANIMES_DIR
             CFG["ANIMES_DIR"] = path_0
+            CFG["ANIMES_DIR_OLD"] = ANIMES_DIR
             CFG.save_config()
         case "--r_dir":
             try:
@@ -268,8 +268,8 @@ commands
                 exit(ACCESS_DENIED)
             except FileExistsError:
                 pass
-            CFG["RESEPTION_DIR_OLD"] = RESEPTION_DIR
             CFG["RESEPTION_DIR"] = path_1
+            CFG["RESEPTION_DIR_OLD"] = RESEPTION_DIR
             CFG.save_config()
 
         case "--dir":
@@ -282,10 +282,10 @@ commands
                 exit(ACCESS_DENIED)
             except FileExistsError:
                 pass
-            CFG["ANIMES_DIR"] = ANIMES_DIR
-            CFG["ANIMES_DIR_OLD"] = path_0
-            CFG["RESEPTION_DIR_OLD"] = RESEPTION_DIR
-            CFG["RESEPTION_DIR"] = path_1
+            CFG["ANIMES_DIR"] = path_0 
+            CFG["ANIMES_DIR_OLD"] = ANIMES_DIR
+            CFG["RESEPTION_DIR_OLD"] = path_1
+            CFG["RESEPTION_DIR"] =  RESEPTION_DIR
             CFG.save_config()
             
         case _:
@@ -307,4 +307,4 @@ def _back_dir()->str:
     return _dir
 if __name__ == '__main__':
     main(argv)
-    # main(["anime","--config"])
+    # main(["anime","--config","--dir","-d"])
