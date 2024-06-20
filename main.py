@@ -1,25 +1,25 @@
 __author__ = "Anderesu44"
-__version__ = 0.9
+__version__ = 1.0
 
 from sys import argv,exit
 from typing import NoReturn
-from os import mkdir,listdir,path,system,getcwd
+from os import mkdir, listdir, path, system, getcwd
 from model.dbm import ConfigManager
-from model._class_ import Anime , Reseption
+from model._class_ import Anime, Reseption, Cleaner
 #{
 ID_ERROR = "\nthe id given not is valid\n"
 DIR_ERROR = "path specified not found"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ACCESS_DENIED = "Access denied"
-VERSION = "0.9.9"
+VERSION = "1.0.0"
 CONFIG_DIR = "C:\\ProgramData\\Anderesu44\\animes"
 CFG = ConfigManager(CONFIG_DIR)
 
-ANIMES_DIR = CFG["ANIMES_DIR"]
-RESEPTION_DIR = CFG["RESEPTION_DIR"]
+ANIMES_DIR:str = CFG["ANIMES_DIR"]
+RESEPTION_DIR:str = CFG["RESEPTION_DIR"]
 #}
-def main(argv):
+def main(argv:list[str]):
     HELP = """
 animes <command> [option]
     -n or --new     => make new animme folder
@@ -74,10 +74,13 @@ all the arguments after the 3rd will be taken as a name
                 input()
         exit()
     if len(str(num)) != 4:
-        print(ID_ERROR)
-        if "--wait" in argv:
+        num = f"{int(num):04}"
+        if len(str(num)) != 4:
+
+            print(ID_ERROR)
+            if "--wait" in argv:
                 input()
-        exit()
+                exit()
     nam = ""
     c = 1
     for a in args[2:]:
@@ -110,7 +113,9 @@ all the arguments after the 3rd will be taken as a name
             try:
                 int(num_)
                 if len(num_) != 4:
-                    raise ValueError
+                    num_ = f"{int(num_):04}"
+                    if len(str(num_)) != 4:
+                        raise ValueError
                 conten.append(o)
             except ValueError:
                 pass
@@ -118,8 +123,10 @@ all the arguments after the 3rd will be taken as a name
         conten = str(conten).replace("'","")
         raise FileExistsError(f"Cannot create a folder that already exists\n{num}_{nam}:\n\tContains:{conten}")
     exit()
-def _sort(args)->NoReturn:
+def _sort(args:list)->NoReturn:
     HELP = f"""
+animes <{args[0]}>
+animes <{args[0]}> [path]
 animes <{args[0]}> [command]
 commands
     -h     => show help
@@ -135,38 +142,43 @@ special commands
                 listdir(getcwd())
                 _DIR = getcwd()
             except FileNotFoundError:
-                print(DIR_ERROR)
+                exit(DIR_ERROR)
         elif arg == "..":
             try:
                 listdir(_back_dir())
                 _DIR = _back_dir()
             except FileNotFoundError:
-                print(DIR_ERROR)
-        elif "-" in arg and arg != "--wait":
-            print(COMMAND_UNKNOWN)
-            exit()
+                exit(DIR_ERROR)
+        elif arg == "--wait":
+            _DIR = RESEPTION_DIR
+        
+        elif "-" in arg:
+            exit(COMMAND_UNKNOWN)
+
     if len(args) == 1:
         _DIR = RESEPTION_DIR
         
-
     while True:
         try:
             reseption = Reseption(path.join(_DIR))
+            reseption.search_in_tree()
             break
         except FileNotFoundError:
             mkdir(path.join(_DIR))
     
     animes = Anime(ANIMES_DIR)
-    caps = reseption.get_paths()
-    iter = -1
+    caps= reseption.get_items()
+    files = {}
     for cap in caps:
-        iter += 1
-        temp = cap.split("_")[0]
-        temp = temp.replace(_DIR + "\\","")
-        a_num = int(temp)# anime_number
-
-        temp = cap.split("_")[1]
-        c_num = "" #capter_number
+        temp = (lambda x: x[-1] if x[-1] != "" else x[0])(cap.split("\\"))
+        temp = temp.replace("LAT_","")
+        a_num = temp.split("_")[0]# anime_number
+        c_num = temp.split("_")[1]
+        if len(a_num) != 4:
+            a_num = f"{int(a_num):04}"
+        
+        temp = c_num.split(".")[0]
+        c_num = ""#capter_number
         for c in temp:
             try:
                 int(c)
@@ -175,20 +187,20 @@ special commands
                 pass
         while True:
             try:
-                new_path = f"{animes.get_path(num=a_num)}\\{a_num}_{c_num}.mp4"
+                new_path = f"{animes.get_path(num=int(a_num))}\\{a_num}_{c_num}.mp4"
                 break
             except KeyError:
                 _new(["-n",a_num,"unnamed"])
-        system(f'move "{cap}" "{new_path}"')
-        if iter == 0:
-            print(f"relocated files:")
-        print(f"\t{cap} to {new_path}\n")
-    print("All Sorted")
+        files[f"{_DIR}\\{cap}"] = new_path
+    if len(args) == 1:
+        Cleaner(_DIR)
+    _move(files)
     for arg in args:
         if arg == "--wait":
             input()
     exit()
-def _view(args)->NoReturn:
+
+def _view(args:list)->NoReturn:
     a = Anime(ANIMES_DIR)
     print(a,end="",)
     for arg in args:
@@ -196,7 +208,7 @@ def _view(args)->NoReturn:
             input()
     exit()
 
-def _config(args)->NoReturn:
+def _config(args:list)->NoReturn:
     HELP = f"""
 animes {args[0]} <commands> [options]
 
@@ -291,7 +303,7 @@ commands
         case _:
             exit(COMMAND_UNKNOWN)
 
-def _valid_name(name)->bool:
+def _valid_name(name:str)->bool:
     x = name
     if "\\" in x or "/" in x or ":" in x or "*" in x or "?" in x or '"' in x or "<" in x or ">" in x or "|" in x:
         return False
@@ -305,6 +317,17 @@ def _back_dir()->str:
     for folder in temp:
         _dir += folder + "\\"
     return _dir
+def _move(files:dict[str,str])->None:
+    iter = -1
+    for cap in files:
+        iter += 1
+        new_path = files[cap]
+        system(f'move "{cap}" "{new_path}"')
+        if iter == 0:
+            print(f"relocated files:")
+        print(f"\t{cap} to {new_path}\n")
+    print("All Sorted")
+
 if __name__ == '__main__':
     main(argv)
-    # main(["anime","--config","--dir","-d"])
+    # main(["anime","-s",])#?only debug
