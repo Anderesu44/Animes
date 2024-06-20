@@ -156,7 +156,7 @@ class Cleaner():
         for obj in branches:
             try:
                 listdir(f"{actual_path}\\{obj}")
-                self.__search_in_tree(root,branch=obj)
+                self.__clear_in_tree(root,branch=obj)
             except NotADirectoryError:
                 pass
             
