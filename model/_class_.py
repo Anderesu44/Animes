@@ -144,19 +144,22 @@ class Cleaner():
 
     def clear_in_tree(self,path,*args,**kwargs)->None:    
         self.__clear_in_tree(path)
-        if self.deleted >= 1:
-            self.deleted = 0
-            self.__clear_in_tree(path)
+        while True:
+            if self.deleted >= 1:
+                self.deleted = 0
+                self.__clear_in_tree(path)
+            else:
+                break
     def __clear_in_tree(self,root:str,branch:str|None=None)->None:
         actual_path = (lambda x,y: f"{y}\\{x}" if x else y)(branch,root)
         branches = listdir(actual_path)
-        self.deleted += 1
         if branches == []:
-            system(f"rmdir {actual_path}")
+            self.deleted += 1
+            system(f'rmdir "{actual_path}"')
         for obj in branches:
             try:
                 listdir(f"{actual_path}\\{obj}")
-                self.__clear_in_tree(root,branch=obj)
+                self.__clear_in_tree(actual_path,branch=obj)
             except NotADirectoryError:
                 pass
             

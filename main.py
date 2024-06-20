@@ -12,7 +12,7 @@ DIR_ERROR = "path specified not found"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ACCESS_DENIED = "Access denied"
-VERSION = "1.0.0"
+VERSION = "1.0.2"
 CONFIG_DIR = "C:\\ProgramData\\Anderesu44\\animes"
 CFG = ConfigManager(CONFIG_DIR)
 
@@ -192,7 +192,7 @@ special commands
             except KeyError:
                 _new(["-n",a_num,"unnamed"])
         files[f"{_DIR}\\{cap}"] = new_path
-    if len(args) == 1:
+    if not ("." in args or ".." in args):
         Cleaner(_DIR)
     _move(files)
     for arg in args:
@@ -330,4 +330,4 @@ def _move(files:dict[str,str])->None:
 
 if __name__ == '__main__':
     main(argv)
-    # main(["anime","-s",])#?only debug
+    # main(["anime","-s","--wait"])#?only debug
