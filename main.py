@@ -1,82 +1,63 @@
 __author__ = "Anderesu44"
-__version__ = 1.0
+__version__ = 2.0
 
 from sys import argv,exit
 from typing import NoReturn
 from os import mkdir, listdir, path, system, getcwd
-from model.dbm import ConfigManager
-from model._class_ import Anime, Reseption, Cleaner
-#{
-ID_ERROR = "\nthe id given not is valid\n"
-DIR_ERROR = "path specified not found"
-NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
-COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
-ACCESS_DENIED = "Access denied"
-VERSION = "1.0.2"
-CONFIG_DIR = "C:\\ProgramData\\Anderesu44\\animes"
+from modules.dbm import ConfigManager
+from modules._class_ import Anime, Reseption, Cleaner
+from msgs import COMMAND_UNKNOWN, DIR_ERROR, ID_ERROR, MAIN_HELP, NAME_ERROR
+
+VERSION = "1.0.3"
+CONFIG_DIR = ".\\db"#"C:\\ProgramData\\Anderesu44\\animes"
 CFG = ConfigManager(CONFIG_DIR)
 
 ANIMES_DIR:str = CFG["ANIMES_DIR"]
 RESEPTION_DIR:str = CFG["RESEPTION_DIR"]
-#}
+
 def main(argv:list[str]):
-    HELP = """
-animes <command> [option]
-    -n or --new     => make new animme folder
-    -s or --sort    => sort the animes in reseption folder
-    --config        => changes the program configuration
 
-    -v or --view    => show all animes folders
-    -h or --help    => show help
-    --version       => show vesion
-
-special commands
-    --wait          => the program waits before ending
-"""
+    
     if len(argv) == 1:
-        print(HELP)
+        print(MAIN_HELP)
         exit()
     match argv[1]:
         case "-n"|"--new":
-            _new(argv[1:])
+            _new(*argv[1:])
         case "-s"|"--sort":
-            _sort(argv[1:])
+            _sort(*argv[1:])
         case "--config":
             _config(argv[1:])
         case "-v"|"--view":
             _view(argv[1:])
         case "-h"|"--help":
-            print(HELP)
+            print(MAIN_HELP)
             if "--wait" in argv:
                 input()
             exit()
         case "--version":
-            print(f"animes manager version:{VERSION}")
+            print(f"animes manager version: {VERSION}")
         case _:
             exit(COMMAND_UNKNOWN)
-def _new(args:list)->NoReturn:
+
+def _new(*args)->NoReturn:
     HELP = f"""
 animes {args[0]} <id:int> <name:str>
 
 all the arguments after the 3rd will be taken as a name
 """
     if len(args) == 1:
-        print(HELP)
-        exit()
+        exit(HELP)
     if args[1] == "-h":
-        print(HELP)
-        exit()
+        exit(HELP)
     try:
         num = int(args[1])
     except ValueError:
         print(ID_ERROR)
-        if "--wait" in argv:
-                input()
         exit()
     if len(str(num)) != 4:
         num = f"{int(num):04}"
         if len(str(num)) != 4:
-
             print(ID_ERROR)
             if "--wait" in argv:
                 input()
@@ -90,11 +71,8 @@ all the arguments after the 3rd will be taken as a name
         else:
             nam += " " + a 
     if not _valid_name(nam):
-        print(NAME_ERROR)
-        if "--wait" in argv:
-                input()
-        exit()
-    
+        exit(NAME_ERROR)
+        
     _path =f"{ANIMES_DIR}\\{num}_{nam}"
     try:
         mkdir(_path)
@@ -121,7 +99,7 @@ all the arguments after the 3rd will be taken as a name
                 pass
                 
         conten = str(conten).replace("'","")
-        raise FileExistsError(f"Cannot create a folder that already exists\n{num}_{nam}:\n\tContains:{conten}")
+        exit(f"Cannot create a folder that already exists\n{num}_{nam}:\n\tContains:{conten}")
     exit()
 def _sort(args:list)->NoReturn:
     HELP = f"""
@@ -135,36 +113,35 @@ special commands
 """
     for arg in args[1:]:
         if arg == "-h":
-            print(HELP)
-            exit()
+            exit(HELP)
         elif arg == ".":
             try:
                 listdir(getcwd())
-                _DIR = getcwd()
+                DIR_ = getcwd()
             except FileNotFoundError:
                 exit(DIR_ERROR)
         elif arg == "..":
             try:
                 listdir(_back_dir())
-                _DIR = _back_dir()
+                DIR_ = _back_dir()
             except FileNotFoundError:
                 exit(DIR_ERROR)
         elif arg == "--wait":
-            _DIR = RESEPTION_DIR
+            DIR_ = RESEPTION_DIR
         
         elif "-" in arg:
             exit(COMMAND_UNKNOWN)
 
     if len(args) == 1:
-        _DIR = RESEPTION_DIR
+        DIR_ = RESEPTION_DIR
         
     while True:
         try:
-            reseption = Reseption(path.join(_DIR))
+            reseption = Reseption(DIR_)
             reseption.search_in_tree()
             break
         except FileNotFoundError:
-            mkdir(path.join(_DIR))
+            mkdir(DIR_)
     
     animes = Anime(ANIMES_DIR)
     caps= reseption.get_items()
@@ -191,9 +168,9 @@ special commands
                 break
             except KeyError:
                 _new(["-n",a_num,"unnamed"])
-        files[f"{_DIR}\\{cap}"] = new_path
+        files[f"{DIR_}\\{cap}"] = new_path
     if not ("." in args or ".." in args):
-        Cleaner(_DIR)
+        Cleaner(DIR_)
     _move(files)
     for arg in args:
         if arg == "--wait":
@@ -208,7 +185,7 @@ def _view(args:list)->NoReturn:
             input()
     exit()
 
-def _config(args:list)->NoReturn:
+def     _config(args:list)->NoReturn:
     HELP = f"""
 animes {args[0]} <commands> [options]
 
