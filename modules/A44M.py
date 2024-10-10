@@ -1,20 +1,23 @@
 __author__ = "Anderesu44"
-__version__ = .6
+__version__ = .9
 
 from json import load,dump
-from os import mkdir, path, getcwd
+from os import listdir, mkdir, path, getcwd
+from types import FunctionType as function
 
 class Algorithms():
-    def bubbleSort(list:list)->list:
-        n = len(list)
+    def __init__(self) -> None:
+        pass
+    def bubbleSort(_list:list)->list:
+        n = len(_list)
         for i  in range(1, n):
             for j in range(n-1):
-                if list[j] > list[j+1]:
-                    temp = list[j]
-                    list[j] = list[j+1]
-                    list[j+1] = temp
-        return list
-    def __merge(self,list_1,list_2):
+                if _list[j] > _list[j+1]:
+                    temp = _list[j]
+                    _list[j] = _list[j+1]
+                    _list[j+1] = temp
+        return _list
+    def __merge(self,list_1,list_2)->list:
         list_3 = []
         while len(list_1) > 0 and len(list_2) > 0:
             if  list_1[0] < list_2[0]:
@@ -28,11 +31,11 @@ class Algorithms():
         if len(list_2) > 0:
            list_3 = list_3 + list_2 
         return list_3
-    def mergeSort(self,list):
-        if len(list) == 1:
-            return list
-        lList = list[:len(list)//2]
-        rList = list[len(list)//2:]
+    def mergeSort(self,_list)-> list:
+        if len(_list) == 1:
+            return _list
+        lList = _list[:len(_list)//2]
+        rList = _list[len(_list)//2:]
         lList = self.mergeSort(lList)
         rList = self.mergeSort(rList)
 
@@ -121,7 +124,6 @@ class DataBaseJsonManger():
             dump(data,f,indent=2)
         return True
 
-
 class ConfigManager(dict):
     def __init__(self,db_path: str = ".\\db",name: str = "cfg.json",init:dict|None=None):
         super().__init__()
@@ -143,6 +145,45 @@ class ConfigManager(dict):
             value = data[key]
             self.__setitem__(key,value)
         self.save_config()
+
+
+class A44Map():
+    def __init__(self,path_:str|None=None,folders_function:function|None=None,files_function:function|None=None) -> None:
+
+        self.root:str = path_
+        self.folders_function:function = folders_function
+        self.files_function:function = files_function
+        self.folders:list[str] = []
+        self.files:list[str] = []
+    
+    def _map(self,folders_function:function=None,files_function:function=None):
+        if folders_function:
+            self.folders_function= folders_function
+        if files_function:
+            self.files_function= files_function
+        self.__map(self.root)
+        
+    def __map(self,branch):
+        childrens = listdir(branch)
+        
+        for child in childrens:
+            child_path = path.join(branch,child)
+            if path.isdir(child_path):
+                #?child_type = "Branch"
+                if self.folders_function == function:
+                    self.folders_function(child_path)
+                self.folders.append(child_path)
+                self.__map(child_path)
+            else:
+                #*child_type = "Fruit"
+                if self.files_function == function:
+                    self.files_function(child_path)
+                self.files.append(child_path)
+    def __str__():
+        pass
+    
+    def get_tree():...
+
 
 if __name__ == "__main__":
     input()
