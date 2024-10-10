@@ -1,13 +1,12 @@
 __author__ = "Anderesu44"
-__version__ = .9
+__version__ = 1.0
 
 from json import load,dump
 from os import listdir, mkdir, path, getcwd
 from types import FunctionType as function
 
 class Algorithms():
-    def __init__(self) -> None:
-        pass
+    def __init__(self) -> None:...
     def bubbleSort(_list:list)->list:
         n = len(_list)
         for i  in range(1, n):
@@ -62,6 +61,15 @@ def reducing_characters(text:str,character:str = " ")->str:
             else:
                 new_text += i
     return new_text
+def format_text(*args,sep:str|None=" ",end:str|None="\n",**kwargs)->str:
+    text:str = ""
+    for arg in args:
+        text += str(arg)
+        if sep:
+            text+= str(sep)
+    if end:
+        text+= str(end)
+    return text
 
 class DataBaseJsonManger():
     def __init__(self,db_path:str=".\\db",name:str="db.json"):
@@ -155,14 +163,26 @@ class A44Map():
         self.files_function:function = files_function
         self.folders:list[str] = []
         self.files:list[str] = []
-    
+        self.branches:list[Branch]=[]
+        self.fruits:list[Fruit]=[]
+    def branche_function(branch):
+        branch.append()
+
+    def fruit_function():
+        pass
     def _map(self,folders_function:function=None,files_function:function=None):
         if folders_function:
             self.folders_function= folders_function
         if files_function:
             self.files_function= files_function
         self.__map(self.root)
-        
+
+    def _tree(self,branche_function:function=None,fruit_function:function=None):
+        if branche_function:
+            self.branche_function= branche_function
+        if fruit_function:
+            self.fruit_function= fruit_function
+        self.__map(self.root)
     def __map(self,branch):
         childrens = listdir(branch)
         
@@ -170,20 +190,71 @@ class A44Map():
             child_path = path.join(branch,child)
             if path.isdir(child_path):
                 #?child_type = "Branch"
-                if self.folders_function == function:
+                if type(self.folders_function) == function:
                     self.folders_function(child_path)
                 self.folders.append(child_path)
-                self.__map(child_path)
             else:
                 #*child_type = "Fruit"
-                if self.files_function == function:
+                if type(self.files_function) == function:
                     self.files_function(child_path)
                 self.files.append(child_path)
-    def __str__():
-        pass
-    
-    def get_tree():...
+                
+    def __str__(self)->str:
+        return format_text("files:",*self.files,sep="\n\t")+format_text("folders:",*self.folders,sep="\n\t")
 
+#!in development
+class Branch():
+    def __init__(self,_path:str):
+        if not path.isdir(_path):
+            raise TypeError(f'"{_path}" Not found or not a folder')
+        
+        name = path.basename(_path)
+        location = path.dirname(_path)
+        
+        self._path:str = _path
+        self.name:str =name
+        self.location:str =location
+        self.direct_childrens:tuple[Fruit,Branch] = ()
+        self.childrens:tuple[Fruit,Branch] = ()
+        self.length = 0
+    
+    def append(self,child)-> int:
+        if type(child) == Fruit or type(child) == Branch:
+            if child.location == self._path:
+                temp = list(self.direct_childrens)
+                temp.append(child)
+                self.direct_childrens = tuple(temp)
+            elif self._path in child.location:
+                temp = list(self.childrens)
+                temp.append(child)
+                self.childrens = tuple(temp)
+            else:
+                raise TypeError(f"expected a child, {child} not is child of {self}")
+        elif type(child) == Branch:
+            pass
+        else:
+            raise TypeError(f'expected Fruit or Branch object, not {type(child)}')
+        self.length+=1
+        return self.length
+    def __str__(self)->str:
+        return self.name
+    
+    def __len__(self)->int:
+        return self.length
+    __add__ = append
+    
+class Fruit():
+    def __init__(self,_path:str):
+        if not path.isfile(_path):
+            raise TypeError(f'"{_path}" Not found or not a file')
+        
+        name = path.basename(_path)
+        location = path.dirname(_path)
+        
+        
+        self._path:str = path
+        self.name:str = name
+        self.location:str = location
 
 if __name__ == "__main__":
     input()

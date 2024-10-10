@@ -1,21 +1,24 @@
 from os import getcwd, listdir, mkdir, path, system
+from shutil import move
 from sys import argv
 from typing import NoReturn
 
+from modules import ID_ERR as ID_ERROR
 from modules.A44M import ConfigManager
+from modules.Entities import Animes, Reception
 
 
-ID_ERROR = "\nthe id given not is valid\n"
+
 DIR_ERROR = "path specified not found"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ACCESS_DENIED = "Access denied"
 VERSION = "1.0.2"
 CONFIG_DIR = "./db"#!"C:\\ProgramData\\Anderesu44\\animes"
-INIT_CONFIG = { "DEFAULT_RESEPTION_DIR": "~/Videos/Animes/0000", "DEFAULT_ANIMES_DIR": "~/Videos/Animes", "RESEPTION_DIR": "~/Videos/Animes/0000;", "ANIMES_DIR": "~/Videos/Animes","RESEPTION_OLD_DIR": "~/Videos/Animes/0000", "ANIMES_OLD_DIR": "~/Videos/Animes"}
-
+INIT_CONFIG = {"DEFAULT_ANIMES_DIR": "~/Videos/Animes","DEFAULT_RECEPTION_DIR": "~/Videos/Animes/0000","ANIMES_DIR": "~/Videos/Animes","RECEPTION_DIR": "~/Videos/Animes/0000","ANIMES_OLD_DIR": "~/Videos/Animes","RECEPTION_OLD_DIR": "~/Videos/Animes/0000","ICONS_FOLDER":None}
 CFG = ConfigManager(CONFIG_DIR,init=INIT_CONFIG)
 ANIMES_DIR = path.realpath(path.expanduser(CFG["ANIMES_DIR"]))
+RECEPTION_DIR = path.realpath(path.expanduser(CFG["RECEPTION_DIR"]))
 
 def main(*args: str,**kwargs):
     HELP="""
@@ -37,8 +40,7 @@ special commands
         case "-n"|"--new":
             _new(*argv[1:])
         case "-s"|"--sort":
-            # _sort(argv[1:])
-            pass
+            _sort(argv[1:])
         case "--config":
             # _config(argv[1:])
             pass
@@ -105,8 +107,44 @@ all the arguments after the 3rd will be taken as a name
     exit("All right")
 
 def _sort(*args)->NoReturn:
-    pass
-
+    HELP = f"""
+animes <{args[0]}>
+animes <{args[0]}> [path]
+animes <{args[0]}> [command]
+commands
+    -h     => show help
+special commands
+    --wait => the program waits before ending
+"""
+    wait = False
+    reception_path = ""
+    if "--wait" in args:
+        wait = True
+    if len(args) == 1:
+        reception_path = RECEPTION_DIR
+    else:
+        if args[1] == "-h":
+            exit(HELP)
+        if "-" in args[1]:
+            exit(COMMAND_UNKNOWN)
+        if not path.isdir(path.realpath(path.expanduser(args[1]))):
+            if not path.exists(args[1]):
+                exit(f'"{args[1]}" Not Found or not a folder')
+    animes = Animes(ANIMES_DIR)
+    reception = Reception(reception_path)
+    dessorted_caps = reception.get_caps()
+    iter = -1
+    for cap in dessorted_caps:
+        try:
+            anime = animes.get_anime_by_id(cap.id)
+        except KeyError:
+            anime = animes.add_anime(f"{cap.id}_unamed")
+        move(cap.path,anime.path)
+        if iter == 0:
+            print(f"relocated files:")
+        print(f"\t{cap} to {anime.name}")
+    print("All Sorted")
+    exit()
 def _valid_name(name:str)->bool:
     if "\\" in name or "/" in name or ":" in name or "*" in name or "?" in name or '"' in name or "<" in name or ">" in name or "|" in name:
         return False
@@ -120,15 +158,5 @@ def _back_dir()->str:
     for folder in temp:
         _dir += folder + "\\"
     return _dir
-def _move(files:dict[str,str])->None:
-    iter = -1
-    for cap in files:
-        iter += 1
-        new_path = files[cap]
-        system(f'move "{cap}" "{new_path}"')
-        if iter == 0:
-            print(f"relocated files:")
-        print(f"\t{cap} to {new_path}\n")
-    print("All Sorted")
 if __name__ == '__main__':
     main(*argv)
