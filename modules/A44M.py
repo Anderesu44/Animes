@@ -1,5 +1,5 @@
 __author__ = "Anderesu44"
-__version__ = 1.0
+__version__ = 1.2
 
 from json import load,dump
 from os import listdir, mkdir, path, getcwd
@@ -61,14 +61,36 @@ def reducing_characters(text:str,character:str = " ")->str:
             else:
                 new_text += i
     return new_text
-def format_text(*args,sep:str|None=" ",end:str|None="\n",**kwargs)->str:
+def format_text(*args,sep:str|None=" ",final:str|None=None,start:int|None=None,end:int|None=None,max:int|None=None,min_fill:tuple[int,str]|None=None,three_dot:str="...",**kwargs)->str:
     text:str = ""
+    if min_fill:
+        min, fill = min_fill
     for arg in args:
         text += str(arg)
         if sep:
             text+= str(sep)
+    if sep:
+        text = text.rstrip(str(sep))
+    if start:
+        text = format_text(*text[start:],sep="")
+        text = str(three_dot)+text
     if end:
-        text+= str(end)
+        text = format_text(*text[:end],sep="")
+        text += str(three_dot)
+    if min_fill:
+        if min:
+            if len(text)<min:
+                missing = min- len(text)
+                fillling =  format_text(fill*(min // len(fill)+1),max=missing,three_dot="")
+                text+= fillling
+        
+    if max:
+        if len(text)>max:
+            text = format_text(*text[:max],sep="")
+            text += str(three_dot)
+
+    if final:
+        text+= str(final)
     return text
 
 class DataBaseJsonManger():
