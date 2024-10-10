@@ -46,9 +46,10 @@ class Anime():
         
         
         self.id:int = self.__get_id(file)
-        self.name:str = format_text(*file.split("_")[1:],end="")
+        self.name:str = format_text(*file.split("_")[1:])
         self.path:str = _path
         self.location:str = localitation
+        self.length:int = 0
         self.caps:list[Cap] = self.__find_caps()
         
     def __find_caps(self)-> list[Cap]:
@@ -56,13 +57,16 @@ class Anime():
         caps:list[Cap] = []
         for child_file in children_files:
             try:
-                temp = Cap(child_file)
+                temp = Cap(path.join(self.path,child_file))
             except FileNotFoundError:
                 temp = None
             except ID_ERROR:
                 temp = None
-            if temp:
+            except FormatError:
+                temp = None
+            if type(temp) == Cap:
                 caps.append(temp)
+                self.length += 1
         return caps
     
     def __get_id(self,file:str)->int:
@@ -75,13 +79,16 @@ class Anime():
             raise  ID_ERROR(ID_ERR+f'"{_id}"')
         return _id
     def __str__(self):
-        return f"{self.name}: {len(self.caps)}"
-    
+        return f"{self.name}: {self.length}"
+
+    def __len__(self)->int:
+        return self.length
 class Animes():
     def __init__(self,_path):
         if not path.isdir(_path):
             raise FileNotFoundError(f'"{_path}" Not Found or not a folder')
         animes = []
+        self.length:int = 0
         objs = listdir(_path)
         for obj in objs:
             try:
@@ -90,8 +97,9 @@ class Animes():
                 temp = None
             except FileNotFoundError:
                 temp = None
-            if temp:
+            if type(temp) == Anime:
                 animes.append(temp)
+                self.length+=1
         self.path = _path
         self.animes:tuple[Anime]=tuple(animes)
     def get_animes(self):
@@ -118,9 +126,9 @@ class Animes():
             self.animes = tuple(animes)
         return anime
     def __str__(self)->str:
-        str_ = (lambda a:f"{a} Animes:\n" if a > 0 else "No Hay animes en el directorio especificado")(len(self.animes))
-        for animes in self.animes:
-            str_ += f"{animes}\n"
+        str_ = (lambda a:f"{a} Animes:\n" if a > 0 else f"No Hay animes en el directorio especificado\n:    {self.path}\nanimes:    {self.animes}")(self.length)
+        for anime in self.animes:
+            str_ += f"{anime}\n"
         return str_
 class Reception():
     def __init__(self,_path):

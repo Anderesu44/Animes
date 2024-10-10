@@ -4,13 +4,14 @@ from sys import argv
 from typing import NoReturn
 
 from modules import ID_ERR as ID_ERROR
-from modules.A44M import ConfigManager
+from modules.A44M import ConfigManager, format_text
 from modules.Entities import Animes, Reception
 
 
 
 DIR_ERROR = "path specified not found"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
+SINTAX_ERROR ="the command syntax's not correct try --help"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ACCESS_DENIED = "Access denied"
 VERSION = "1.0.2"
@@ -40,12 +41,12 @@ special commands
         case "-n"|"--new":
             _new(*argv[1:])
         case "-s"|"--sort":
-            _sort(argv[1:])
+            _sort(*argv[1:])
         case "--config":
             # _config(argv[1:])
             pass
         case "-v"|"--view":
-            # _view(argv[1:])
+            _view(argv[1:])
             pass
         case "-h"|"--help":
             print(HELP)
@@ -112,12 +113,15 @@ animes <{args[0]}>
 animes <{args[0]}> [path]
 animes <{args[0]}> [command]
 commands
-    -h     => show help
+    -h        => show help
+    in        => sort the animes in the specified path instead of the {format_text("...",*(ANIMES_DIR.split("\\")[-3:]),sep="\\")}
 special commands
-    --wait => the program waits before ending
+    --wait    => the program waits before ending
+    --default => use the path saved default
 """
     wait = False
     reception_path = ""
+    animes_path = ANIMES_DIR
     if "--wait" in args:
         wait = True
     if len(args) == 1:
@@ -125,12 +129,30 @@ special commands
     else:
         if args[1] == "-h":
             exit(HELP)
-        if "-" in args[1]:
+        if args[1] == "--default":
+            reception_path = RECEPTION_DIR
+        elif "-" in args[1]:
             exit(COMMAND_UNKNOWN)
-        if not path.isdir(path.realpath(path.expanduser(args[1]))):
-            if not path.exists(args[1]):
-                exit(f'"{args[1]}" Not Found or not a folder')
-    animes = Animes(ANIMES_DIR)
+        else:
+            if not path.isdir(path.realpath(path.expanduser(args[1]))):
+                if not path.exists(args[1]):
+                    exit(f'"{args[1]}" Not Found or not a folder')
+            else:
+                reception_path = path.realpath(path.expanduser(args[1]))
+        if len(args) == 3:
+            exit(SINTAX_ERROR)
+        if len(args) == 4:
+            if args[2] == "in":
+                if not path.isdir(path.realpath(path.expanduser(args[3]))):
+                    exit(f'"{args[3]}" Not Found or not a folder')
+                else:
+                    if not path.exists(args[3]):
+                        exit(f'"{args[3]}" Not Found or not a folder')
+                    animes_path = path.realpath(path. expanduser(args[3]))
+            else:
+                exit(COMMAND_UNKNOWN)
+    
+    animes = Animes(animes_path)
     reception = Reception(reception_path)
     dessorted_caps = reception.get_caps()
     iter = -1
@@ -144,7 +166,18 @@ special commands
             print(f"relocated files:")
         print(f"\t{cap} to {anime.name}")
     print("All Sorted")
+    if wait:
+        input()
     exit()
+
+def _view(*args)->NoReturn:
+    animes = Animes(ANIMES_DIR)
+    print(animes)
+    
+    if "--wait" in args:
+        input()    
+    exit()
+
 def _valid_name(name:str)->bool:
     if "\\" in name or "/" in name or ":" in name or "*" in name or "?" in name or '"' in name or "<" in name or ">" in name or "|" in name:
         return False
