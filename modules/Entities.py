@@ -1,4 +1,4 @@
-from os import listdir, mkdir, path
+from os import listdir, mkdir, path, system
 
 from modules import ID_ERROR,FormatError,ID_ERR
 from modules.A44M import A44Map, format_text
@@ -44,7 +44,6 @@ class Anime():
         localitation = _path.replace(_path.split("\\")[-1],"")
         file= _path.split("\\")[-1]
         
-        
         self.id:int = self.__get_id(file)
         self.name:str = format_text(*file.split("_")[1:])
         self.path:str = _path
@@ -80,7 +79,28 @@ class Anime():
         return _id
     def __str__(self):
         return f"{self.name}: {self.length}"
-
+    def set_icon(self,icons_path):
+        init_file_path = path.join(self.path,"desktop.ini")
+        if icons_path:
+            icon_path = path.join(icons_path,f"{self.id}.ico")
+        else:
+            icon_path = f"{self.id}.ico"
+        iter = 0
+        while True:
+            iter+=1
+            try:
+                with open(init_file_path,"w") as f:
+                    f.write(f'[.ShellClassInfo]\nIconResource="{icon_path}",0')
+                    system(f'attrib +h "{init_file_path}"')
+                    system(f'attrib +r "{self.path}"')
+                    break
+            except PermissionError as error:
+                system(f'attrib -h "{init_file_path}"')
+                system(f'attrib -r "{self.path}"')
+                if iter>2:
+                    print(error)
+                    break
+        
     def __len__(self)->int:
         return self.length
 class Animes():

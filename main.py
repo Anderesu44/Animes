@@ -1,6 +1,9 @@
-from os import getcwd, listdir, mkdir, path, system
+__author__ = "A44"
+__version__ = 2.0
+
+from os import getcwd, mkdir, path, system
 from shutil import move
-from sys import argv
+from sys import argv,exit
 from typing import NoReturn
 
 from modules import ID_ERR as ID_ERROR
@@ -8,15 +11,15 @@ from modules.A44M import ConfigManager, format_text
 from modules.Entities import Animes, Reception
 
 
-
-DIR_ERROR = "path specified not found"
+DIR_ERROR = "Not Found or not a folder"
 NAME_ERROR = "not's valid name\na valid name cannot contain ['[', '<', '\\', '*', '\"', '|', ':', '?', '/', '>', ']',]"
 SINTAX_ERROR ="the command syntax's not correct try --help"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ACCESS_DENIED = "Access denied"
-VERSION = "1.0.2"
-CONFIG_DIR = "./db"#!"C:\\ProgramData\\Anderesu44\\animes"
-INIT_CONFIG = {"DEFAULT_ANIMES_DIR": "~/Videos/Animes","DEFAULT_RECEPTION_DIR": "~/Videos/Animes/0000","ANIMES_DIR": "~/Videos/Animes","RECEPTION_DIR": "~/Videos/Animes/0000","ANIMES_OLD_DIR": "~/Videos/Animes","RECEPTION_OLD_DIR": "~/Videos/Animes/0000","ICONS_FOLDER":None}
+
+VERSION = "2.0.0"
+CONFIG_DIR = "C:\\ProgramData\\Anderesu44\\animes"
+INIT_CONFIG = {"DEFAULT_ANIMES_DIR": "~/Videos/Animes","DEFAULT_RECEPTION_DIR": "~/Videos/Animes/0000","DEFAULT_ICONS_FOLDER":None,"ANIMES_DIR": "~/Videos/Animes","RECEPTION_DIR": "~/Videos/Animes/0000","ICONS_FOLDER":None,"ANIMES_OLD_DIR": "~/Videos/Animes","RECEPTION_OLD_DIR": "~/Videos/Animes/0000","ICONS_OLD_FOLDER":None}
 CFG = ConfigManager(CONFIG_DIR,init=INIT_CONFIG)
 ANIMES_DIR = path.realpath(path.expanduser(CFG["ANIMES_DIR"]))
 RECEPTION_DIR = path.realpath(path.expanduser(CFG["RECEPTION_DIR"]))
@@ -37,25 +40,25 @@ special commands
 """
     if len(args) == 1:
         exit(HELP)
-    match argv[1]:
+    match args[1]:
         case "-n"|"--new":
-            _new(*argv[1:])
+            _new(*args[1:])
         case "-s"|"--sort":
-            _sort(*argv[1:])
+            _sort(*args[1:])
         case "--config":
-            # _config(argv[1:])
+            _config(*args[1:])
             pass
         case "-v"|"--view":
-            _view(argv[1:])
+            _view(args[1:])
             pass
         case "-h"|"--help":
             print(HELP)
-            if "--wait" in argv:
+            if "--wait" in args:
                 input()
             exit()
         case "--version":
             print(f"animes manager version:{VERSION}")
-            if "--wait" in argv:
+            if "--wait" in args:
                 input()
             exit()
         case _:
@@ -178,6 +181,139 @@ def _view(*args)->NoReturn:
         input()    
     exit()
 
+def _config(*args)->NoReturn:
+    HELP = f"""
+animes {args[0]} <commands> [options]
+
+commands
+    --a_dir      => changes the animes directory \t\t({format_text("...",*(ANIMES_DIR.split("\\")[-3:]),sep="\\")}))
+    --r_dir      => changes the default resection directory \t({format_text("...",*(RECEPTION_DIR.split("\\")[-3:]),sep="\\")})
+    --i_dir      => changes the icons directory  (set to None | null | False to save them in the same anime folder) 
+    --dir        => changes the animes directory and the default resection directory
+    
+    --cfg or -o  => open confing.cfg
+    -h           => show help
+""" 
+    if len(args) == 1:
+        exit(HELP)
+    HELP_1 = f"""
+animes {args[0]} {args[1]} <path>
+animes {args[0]} {args[1]} <option>
+
+options
+    --back or -b    => back to the previous configuration
+    --default or -d => set the default configuration
+commands
+    -h              => show help
+""" 
+    match args[1]:
+        case "-h":
+            exit(HELP)
+        case "--cfg"|"-o":
+            system(path.join(CONFIG_DIR,"a44.json"))
+        case "--a_dir"| "--r_dir"|"--dir":
+            if len(args) == 2:
+                exit(HELP_1)
+            match args[2]:
+                case "-h":
+                    exit(HELP_1)
+                case "--back" | "-b":
+                    path_0 = path.realpath(path.expanduser(CFG["ANIMES_OLD_DIR"]))
+                    path_1 = path.realpath(path.expanduser(CFG["RECEPTION_OLD_DIR"]))
+                case "--default" | "-d":
+                    path_0 = path.realpath(path.expanduser(CFG["DEFAULT_ANIMES_DIR"]))
+                    path_1 = path.realpath(path.expanduser(CFG["DEFAULT_RECEPTION_DIR"]))
+                case _:
+                    if args[2][0] == "-":
+                        exit(COMMAND_UNKNOWN)
+                    if not path.isdir(path.realpath(path.expanduser(args[2]))):
+                        exit(f'"{args[2]}" Not Found or not a folder')
+                    path_1 = path_0 = path.realpath(path.expanduser(args[2]))
+        case  "--i_dir":
+            if len(args) == 2:
+                exit(HELP_1)
+            match args[2].lower():
+                case "-h":
+                    exit(HELP_1)
+                case "--back" | "-b":
+                    path_2 = path.realpath(path.expanduser(CFG["ICONS_OLD_FOLDER"]))
+                case "--default" | "-d":
+                    path_2 =path.realpath(path.expanduser( CFG["DEFAULT_ICONS_FOLDER"]))
+                case "none"|"null"|"false":
+                    path_2 = None
+                case _:
+                    if args[2][0] == "-":
+                        exit(COMMAND_UNKNOWN)
+                    if not path.isdir(path.realpath(path.expanduser(args[2]))):
+                        exit(f'"{args[2]}" Not Found or not a folder')
+                        path_2 = path.realpath(path.expanduser(args[2]))
+        case _:
+            exit(COMMAND_UNKNOWN)
+    match args[1]:
+        case "--a_dir":
+            try:
+                mkdir(path_0)
+            except FileNotFoundError:
+                exit(DIR_ERROR)
+            except PermissionError:
+                exit(ACCESS_DENIED)
+            except FileExistsError:
+                pass
+            CFG["ANIMES_DIR"] = path_0
+            CFG["ANIMES_OLD_DIR"] = ANIMES_DIR
+            CFG.save_config()
+        case "--r_dir":
+            try:
+                mkdir(path_1)
+            except FileNotFoundError:
+                exit(DIR_ERROR)
+            except PermissionError:
+                exit(ACCESS_DENIED)
+            except FileExistsError:
+                pass
+            CFG["RESEPTION_DIR"] = path_1
+            CFG["RECEPTION_OLD_DIR"] = RECEPTION_DIR
+            CFG.save_config()
+        case "--i_dir":
+            try:            
+                if path_2:
+                    mkdir(path_2)
+            except FileNotFoundError:
+                exit(DIR_ERROR)
+            except PermissionError:
+                exit(ACCESS_DENIED)
+            except FileExistsError:
+                pass
+            CFG["ICONS_OLD_FOLDER"] = CFG["ICONS_FOLDER"]
+            CFG["ICONS_FOLDER"] = path_2
+            CFG.save_config()
+            print("you want to link all the Animes icons to this new directory?")
+            decision = input("  y/n?: ")
+            if decision.lower() != "y":
+                exit('Successful')
+            else:
+                animes = Animes(ANIMES_DIR)
+                for anime in animes.animes:
+                    anime.set_icon(path_2)
+        case "--dir":
+            try:
+                mkdir(path_0)
+                mkdir(path_1)
+            except FileNotFoundError:
+                exit(DIR_ERROR)
+            except PermissionError:
+                exit(ACCESS_DENIED)
+            except FileExistsError:
+                pass
+            CFG["ANIMES_DIR"] = path_0 
+            CFG["ANIMES_OLD_DIR"] = ANIMES_DIR
+            CFG["RECEPTION_DIR"] = path.join(path_1,"0000")
+            CFG["RESEPTION_OLD_DIR"] =  RECEPTION_DIR
+            CFG.save_config()
+        case _:
+            exit(COMMAND_UNKNOWN)
+    exit("Successful")
+    
 def _valid_name(name:str)->bool:
     if "\\" in name or "/" in name or ":" in name or "*" in name or "?" in name or '"' in name or "<" in name or ">" in name or "|" in name:
         return False
