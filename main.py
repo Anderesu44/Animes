@@ -404,8 +404,7 @@ def _valid_name(name:str)->bool:
 
 if __name__ == '__main__':
     try:
-        # main(*argv)
-        main("animes","-s")
+        main(*argv)
     except Exception as Error:
         #!pide permiso
         from json import dumps
