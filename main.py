@@ -4,11 +4,17 @@ __version__ = 2.5
 
 from os import getcwd, listdir, mkdir, path, system
 from sys import argv,exit
-from typing import NoReturn
+from tkinter import E
+from turtle import down
+from typing import Literal, NoReturn
+
+from anyio import key
+
 
 from modules import ID_ERR as ID_ERROR
 from A44M import ConfigManager, format_text
-from modules.Entities import Animes, Reception
+from modules.Entities import ANIMESDB,ANI_DIR,Animes, Reception
+from modules.hocks import get_anime_by_name, get_id_by_name, get_links_by_anime
 
 
 DIR_ERROR = "Not Found or not a folder"
@@ -17,14 +23,14 @@ SINTAX_ERROR ="the command syntax's not correct try --help"
 COMMAND_UNKNOWN = "\ncommand unknown\ntry -h or --help\n"
 ACCESS_DENIED = "Access denied"
 
-VERSION = "2.5.0"
+VERSION = "2.5.8"
 CONFIG_DIR = path.expanduser("~\\animes")
 INST_DIR = "C:\\Program Files\\Anderesu44\\animes"
 INIT_CONFIG = {"DEFAULT_ANIMES_DIR": "~/Videos/Animes","DEFAULT_RECEPTION_DIR": "~/Videos/Animes/0000","DEFAULT_ICONS_FOLDER":None,"ANIMES_DIR": "~/Videos/Animes","RECEPTION_DIR": "~/Videos/Animes/0000","ICONS_FOLDER":None,"ANIMES_OLD_DIR": "~/Videos/Animes","RECEPTION_OLD_DIR": "~/Videos/Animes/0000","ICONS_OLD_FOLDER":None}
 CFG = ConfigManager(CONFIG_DIR,init=INIT_CONFIG)
 ANIMES_DIR = path.realpath(path.expanduser(CFG["ANIMES_DIR"]))
 RECEPTION_DIR = path.realpath(path.expanduser(CFG["RECEPTION_DIR"]))
-int
+
 def main(*args:tuple[str]): 
     HELP="""
 animes <command> [option]
@@ -53,8 +59,8 @@ special commands
         case "--config":
             _config(*args[1:])
         case "-d"|"--download":
-            exit("in development")
             _download(*args[1:])
+            exit("in development")
         case "-v"|"--view":
             _view(args[1:])
         case "-h"|"--help":
@@ -391,11 +397,304 @@ commands
             exit(COMMAND_UNKNOWN)
     exit("Successful")
    
-def _download(*agrs)->NoReturn:
-    HELP = """
-    """
+def _download(*args)->NoReturn:
+    import curses
+    from keyboard import read_event,KEY_DOWN
+    from pyperclip import copy
+    HELP = f'''
+animes {args[0]} 
+animes {args[0]} <selector> <chapter> <download server>
+
+selectors
+    --id <id:int>       => to select the anime by identifier
+    --name <name:str>   => to select the anime by name
+
+chapter options
+    <int>               => to select this chapter
+    <int:int>           => to select all chapters between These chapters
+    <:int>              => to select all chapters between 1 and this chapter
+    <int:>              => to select all chapters between this chapter and the last chapter (slow function)
+    <:>                 => to select all chapters (slow function)
+
+download servers
+    -m or --mega        => to mega server
+    -f or -onefichier   => to 1fichier server
+    -s or --streamtape  => to streamtape server (recommended)
+    -o or --other       => to other server
+
+special
+    -i or --interactive => console interactive interface
+    '''
+    server:Literal["mega","1fichier","streamtape","other"] = ""
+    if len(args) == 1:
+        def win(cursesWindow):
+            selector = "id"
+            loop_condition = True
+            curses.curs_set(0)
+            while loop_condition:
+                cursesWindow.clear()
+                cursesWindow.addstr(0,0,"select by:")
+                if selector == "id":
+                    cursesWindow.addstr(1,0,">Identifier  Name")
+                else:
+                    cursesWindow.addstr(1,0," Identifier >Name")
+                cursesWindow.refresh()
+                while True:
+                    event = read_event()
+                    
+                    if event.event_type == KEY_DOWN:
+                        match event.name:
+                            case "left":
+                                selector = "id"
+                                break
+                            case "right":
+                                selector = "name"
+                                break
+                            case "enter" | "space":
+                                loop_condition = False
+                                break
+                            case _:
+                                continue
+            return selector
+        selector:Literal["id","name"] = curses.wrapper(win)
+        
+        if selector == "id":
+            def win(cursesWindow,again:bool = False)->str:
+                text_p:int = 0   
+                id:str = ""
+                loop_condition = True
+                curses.curs_set(0)
+                while loop_condition:
+                    cursesWindow.clear()
+                    if again:
+                        cursesWindow.addstr(0,0,"incorrect identifier")
+                        text_p:int = 1
+                    cursesWindow.addstr(text_p,0,f"enter a valid identifier: {id}")
+                    cursesWindow.refresh()
+                    while True:
+                        event = read_event()
+                        
+                        if event.event_type == KEY_DOWN:
+                            if event.name.isnumeric() and len(id)<4:
+                                id+=event.name
+                                break
+                            elif (event.name == "enter" or event.name == "space") and len(id)>=1:
+                                loop_condition = False
+                                break
+                            elif event.name == "backspace":
+                                id = format_text(*id[:-1],sep="")
+                                break
+                            elif event.name == "esc":
+                                exit()
+                            else:
+                                continue
+                return id
+            again = False
+            while True:
+                id = curses.wrapper(win,again)
+                try:
+                    if int(id) == 0:
+                        raise KeyError
+                    anime:dict = ANIMESDB[id]
+                    break
+                except KeyError:
+                    again = True
+                    continue
+        else:
+            def win(cursesWindow,again:bool = False)->str:
+                text_p:int =0
+                name:str = ""
+                loop_condition = True
+                curses.curs_set(0)
+                while loop_condition:
+                    cursesWindow.clear()
+                    if again:
+                        cursesWindow.addstr(0,0,"incorrect name")
+                        text_p:int = 1
+                    cursesWindow.addstr(text_p,0,f"enter a valid name: {name}")
+                    cursesWindow.refresh()
+                    while True:
+                        event = read_event()
+                        
+                        if event.event_type == KEY_DOWN:
+                            if len(event.name) == 1:
+                                name+=event.name
+                                break
+                            elif (event.name == "enter" or event.name == "space") and len(name)>=1:
+                                loop_condition = False
+                                break
+                            elif event.name == "backspace":
+                                name = format_text(*name[:-1],sep="")
+                                break
+                            elif event.name == "esc":
+                                exit()
+                            else:
+                                continue
+                return name
+            again = False
+            while True:
+                name = curses.wrapper(win,again)
+                try:
+                    anime:dict = curses.wrapper(get_anime_by_name,curses,ANIMESDB,name)
+                    break
+                except KeyError:
+                    again = True
+                    continue
+        
+        def win(cursesWindow,cap:Literal["first","last"],again:bool = False)->int:
+            text_p:int = 0   
+            id:str = ""
+            loop_condition = True
+            curses.curs_set(0)
+            while loop_condition:
+                cursesWindow.clear()
+                if again:
+                    cursesWindow.addstr(0,0,"incorrect chapter")
+                    text_p:int = 1
+                cursesWindow.addstr(text_p,0,f"Enter the {cap} chapter you want to download: {id}")
+                cursesWindow.refresh()
+                while True:
+                    event = read_event()
+                    
+                    if event.event_type == KEY_DOWN:
+                        if (event.name.isnumeric() or (event.name == "-" and not id.count("-"))) and len(id)<4:
+                            id+=event.name
+                            break
+                        elif (event.name == "enter" or event.name == "space") and len(id)>=1 and id.replace("-","").isnumeric() and int(id) > -2:
+                            loop_condition = False
+                            break
+                        elif event.name == "backspace":
+                            id = format_text(*id[:-1],sep="")
+                            break
+                        elif event.name == "esc":
+                            exit()
+                        else:
+                            continue
+            return int(id)
+        again = False
+        while True:
+            start = curses.wrapper(win,"first",again)
+            if start == -1:
+                start = 0
+            end = curses.wrapper(win,"last",again)
+            again = True
+            if start < end:
+                continue
+            else:
+                break
+    else:
+        if len(args) < 4:
+            exit(SINTAX_ERROR)
+        match args[1]:
+            case "-h":
+                exit(HELP)
+            case "--id":
+                id:str = args[2]
+                if not id.isnumeric() or len(id) > 4:
+                    exit(ID_ERROR)
+            case "--name":
+                try:
+                    id = curses.wrapper(get_id_by_name,curses,ANIMESDB,args[2])
+                except exit(ID_ERROR):
+                    exit(ID_ERROR)
+            case _:
+                exit(COMMAND_UNKNOWN)
+        try: 
+            anime = ANIMESDB[id]
+        except KeyError:
+            pass
+            exit(ID_ERROR)
+        if not ":" in args[3]:
+            try:
+                start = end = int(args[3])
+            except TypeError:
+                exit(SINTAX_ERROR)
+        elif args == ":":
+            start = 1
+            end = -1
+        else:
+            start, end = args[3].split(":")
+            if start == "":
+                start = 1
+            if end == "":
+                end = -1
+            try:
+                start = int(start)
+                end = int(end)
+            except ValueError:
+                exit(SINTAX_ERROR)
+            if start > end and end != -1:
+                exit(SINTAX_ERROR+"\nThe first chapter cannot be after the last")
+            if start < 1:
+                exit(SINTAX_ERROR)
+
+        match args[4].lower():
+            case "-m"|"--mega":
+                server = "mega"
+            case "-f"|"-onefichier":
+                server = "1fichier"
+            case "-s"|"--streamtape":
+                server = "streamtape"
+            case "-o"|"--other":
+                server = "others"
+            case _:
+                exit(SINTAX_ERROR)
+        
+    try:
+        links:dict[str,str] = curses.wrapper(get_links_by_anime,curses,anime,start,end)
+    except IndexError as Error:
+        Error = str(Error)
+        print(f"an error has occurred the chapter '{Error[Error.find("[")+1:Error.find("]")]}' has not been found and the loop has been closed")
+        print(f"Check the links.txt file in the animes folder in your user directory to see the captured links")
+        exit(str(input("Press enter key to exit")))
+    def win(cursesWindow,links):  
+        selector = 0
+        loop_condition = True
+        curses.curs_set(0)
+        temp = lambda a: ">" if a == selector else " "
+        while loop_condition:
+            cursesWindow.clear()
+            cursesWindow.addstr(0,0,'scroll through the options with "up" and "down" and select them with "space" or "enter"')
+            cursesWindow.addstr(1,0,f"{temp(0)} Mega links ({links["mega"].count("\n")} Links)")
+            cursesWindow.addstr(2,0,f"{temp(1)} 1fichier links ({links["1fichier"].count("\n")} Links)")
+            cursesWindow.addstr(3,0,f"{temp(2)} Streamtape links ({links["streamtape"].count("\n")} Links) (recommended)")
+            cursesWindow.addstr(4,0,f"{temp(3)} Others links ({links["others"].count("\n")} Links)")
+            cursesWindow.refresh()
+            while True:
+                event = read_event()
+                if event.event_type == KEY_DOWN:
+                    match event.name.lower():
+                        case "right"|"c":
+                            keys = list(links.keys())
+                            copy(links[keys[selector]])
+                        case "up":
+                            if selector > 0:
+                                selector-=1
+                                break
+                        case "down":
+                            if selector < 3:
+                                selector+=1
+                                break
+                        case "enter"|"space":
+                            keys = list(links.keys())
+                            copy(links[keys[selector]])
+                            exit()
+                        case "esc":
+                            exit()
+                        case _:
+                            continue
+    with open(path.join(ANI_DIR,"links.txt"),"w") as f:
+        text = f"{id}:{ANIMESDB[id]["title"]}\n"
+        for type_ in links:
+            links_txt = links[type_]
+            text+=f'{type_}\n\n{links_txt}\n'
+        f.write(text)
+    if server:
+        copy(links[server])
+    else:
+        curses.wrapper(win,links)
     exit()
-    
+# 
 def _valid_name(name:str)->bool:
     if "\\" in name or "/" in name or ":" in name or "*" in name or "?" in name or '"' in name or "<" in name or ">" in name or "|" in name:
         return False

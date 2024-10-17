@@ -3,8 +3,8 @@ from os import listdir, mkdir, path, system
 from modules import ID_ERROR,FormatError,ID_ERR
 from A44M import A44Map,ConfigManager ,format_text
 from modules.hocks import format_name_to_dir
-CONFIG_DIR = path.expanduser("~\\animes")#!".\\database"
-ANIMES = ConfigManager(CONFIG_DIR,"animes.json")
+ANI_DIR = path.expanduser("~\\animes")#!".\\database"
+ANIMESDB = ConfigManager(ANI_DIR,"animes.json")
 
 class Ico():
     def __init__(self,_path:str):
@@ -180,7 +180,7 @@ class Animes():
         raise KeyError(id)
     def add_anime(self,anime_id:str,icons_path:str|None=None):
         try:
-            anime_name = format_name_to_dir(ANIMES[anime_id]["title"])
+            anime_name = format_name_to_dir(ANIMESDB[anime_id]["title"])
         except KeyError as Error:
             raise KeyError(f'El id: "{str(Error).strip("'")}" no se encuentra en la base de datos')
         anime_path = f"{anime_id}_{anime_name}"
