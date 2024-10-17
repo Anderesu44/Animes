@@ -186,7 +186,7 @@ special commands
     end = len(dessorted_caps)
     for cap in dessorted_caps:
         porsent = 0
-        print(f'\r{("▬"*int(int(porsent)//2)) .ljust(50,"-")}',end=f" {format_text((lambda a: str(int(float(a))) if a.split(".")[-1] == "0" else a)((format_text(porsent,three_dot="",max=5))),"%",sep="",min_fill=(6," "))}/100% | {progres}/{end}")
+        print(f'\r{("▬"*int(int(porsent)//2)) .ljust(50,"-")} {format_text((lambda a: str(int(float(a))) if a.split(".")[-1] == "0" else a)((format_text(porsent,three_dot="",max=5))),"%",sep="",min_fill=(6," "))}/100% | {progres}/{end}   ',end="")
         try:
             anime = animes.get_anime_by_id(cap.id)
         except KeyError:
@@ -203,7 +203,7 @@ special commands
             # pass
         progres+=1
         porsent = progres/end*100
-        print(f'\r{("▬"*int(int(porsent)//2)) .ljust(50,"-")}',end=f" {format_text((lambda a: str(int(float(a))) if a.split(".")[-1] == "0" else a)((format_text(porsent,three_dot="",max=5))),"%",sep="",min_fill=(6," "))}/100% |{progres}/{end}")
+        print(f'\r{("▬"*int(int(porsent)//2)) .ljust(50,"-")} {format_text((lambda a: str(int(float(a))) if a.split(".")[-1] == "0" else a)((format_text(porsent,three_dot="",max=5))),"%",sep="",min_fill=(6," "))}/100% |{progres}/{end}    ',end="")
     if len(dessorted_caps)>0:
         print(f"\r{"▬"*50} 100%                \nCaps sorted",end="\n")
     
